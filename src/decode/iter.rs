@@ -1,11 +1,11 @@
-use crate::decode::DoublePermutationDecoded;
+use crate::decode::SinglePermutationDecoded;
 
-pub struct DecodedIter<'a, 'b, 'c> {
-    decoded: DoublePermutationDecoded<'a, 'b, 'c>,
+pub struct DecodedIter<'a, 'b> {
+    decoded: SinglePermutationDecoded<'a, 'b>,
     pos: usize
 }
 
-impl<'a, 'b, 'c> Iterator for DecodedIter<'a, 'b, 'c> {
+impl<'a, 'b, 'c> Iterator for DecodedIter<'a, 'b> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -19,9 +19,9 @@ impl<'a, 'b, 'c> Iterator for DecodedIter<'a, 'b, 'c> {
     }
 }
 
-impl<'a, 'b, 'c> IntoIterator for DoublePermutationDecoded<'a, 'b, 'c> {
+impl<'a, 'b, 'c> IntoIterator for SinglePermutationDecoded<'a, 'b> {
     type Item = u8;
-    type IntoIter = DecodedIter<'a, 'b, 'c>;
+    type IntoIter = DecodedIter<'a, 'b>;
 
     fn into_iter(self) -> Self::IntoIter {
         DecodedIter { pos: 0, decoded: self }

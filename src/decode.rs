@@ -4,26 +4,21 @@ pub(crate) mod iter;
 use std::collections;
 use crate::decode::error::DecoderCreationError;
 
-pub struct DoublePermutationDecoded<'a, 'b, 'c> {
+pub struct SinglePermutationDecoded<'a, 'b> {
     s: &'a [u8],
-    hkey: &'b [usize],
-    vkey: &'c [usize]
+    key: &'b [usize],
 }
 
-impl<'a, 'b, 'c> DoublePermutationDecoded<'a, 'b, 'c> {
-    pub fn new(s: &'a [u8],  hkey: &'b [usize], vkey: &'c [usize]) -> Result<Self, DecoderCreationError> {
-        if hkey.len() == 0 { return Err(DecoderCreationError::EmptyKey) }
-        if vkey.len() == 0 { return Err(DecoderCreationError::EmptyKey) }
+impl<'a, 'b> SinglePermutationDecoded<'a, 'b> {
+    pub fn new(s: &'a [u8],  key: &'b [usize]) -> Result<Self, DecoderCreationError> {
+        if key.len() == 0 { return Err(DecoderCreationError::EmptyKey) }
 
-        let hkey_entries: collections::HashSet<usize> = hkey.iter().map(|r| *r).collect();
-        let vkey_entries: collections::HashSet<usize> = vkey.iter().map(|r| *r).collect();
-        let hq: collections::HashSet<usize> = (0..hkey.len()).collect();
-        let vq: collections::HashSet<usize> = (0..vkey.len()).collect();
+        let key_entries: collections::HashSet<usize> = key.iter().map(|r| *r).collect();
+        let q: collections::HashSet<usize> = (0..key.len()).collect();
 
-        if hq != hkey_entries { return Err(DecoderCreationError::BadKey) }
-        if vq != vkey_entries { return Err(DecoderCreationError::BadKey) }
+        if q != key_entries { return Err(DecoderCreationError::BadKey) }
 
-        Ok(DoublePermutationDecoded { s, hkey, vkey })
+        Ok(SinglePermutationDecoded { s, key })
     }
 
     pub fn get(&self, index: usize) -> Option<u8> {
@@ -31,18 +26,18 @@ impl<'a, 'b, 'c> DoublePermutationDecoded<'a, 'b, 'c> {
             return None;
         }
 
-        let block_size = self.hkey.len() * self.vkey.len();
+        let block_size = self.key.len() * self.key.len();
 
         let block_num = index / block_size;
         let block_position = index % block_size;
 
-        let i = block_position / self.hkey.len();
-        let j = block_position % self.hkey.len();
+        let i = block_position / self.key.len();
+        let j = block_position % self.key.len();
 
-        let i_in_decoded = self.hkey[j];
-        let j_in_decoded = self.vkey[i];
+        let i_in_decoded = self.key[j];
+        let j_in_decoded = i;
 
-        let index = block_num * block_size + i_in_decoded * self.hkey.len() + j_in_decoded;
+        let index = block_num * block_size + i_in_decoded * self.key.len() + j_in_decoded;
 
         let item = self.s.get(index).map(|x| *x).unwrap_or(0u8);
 
@@ -50,7 +45,7 @@ impl<'a, 'b, 'c> DoublePermutationDecoded<'a, 'b, 'c> {
     }
 
     pub fn len(&self) -> usize {
-        let block_size = self.hkey.len() * self.vkey.len();
+        let block_size = self.key.len() * self.key.len();
         let blocks_num = self.s.len() / block_size + 1;
 
         blocks_num * block_size
